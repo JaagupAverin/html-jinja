@@ -1,161 +1,65 @@
-(string_literal) @string
+; We consider everything "preprocessor" since that's the closest existing capture to what a jinja block is.
+; Everything is suffixed with "preproc." in order to allow the user to highlight them all together as a whole,
+; or highlight captures separately, as desired.
 
-(number_literal) @number
+; Captures:
+; @preproc                          - default
+; @preproc.string                   - strings
+; @preproc.number.[float.]          - numbers
+; @preproc.boolean                  - booleans
+; @preproc.comment                  - comments
+; @preproc.punctuation.delimiter    - ",.:"
+; @preproc.punctuation.bracket      - "()[]<>"
+; @preproc.variable                 - all variables/parameters
+; @preproc.function                 - functions
+; @preproc.keyword                  - all keywords/builtins
+; @preproc.keyword.directive        - "{{", "}}", and other block delimiters
 
-(float_literal) @number.float
+(_) @preproc
 
-(boolean_literal) @boolean
+(string_literal) @preproc.string
+(number_literal) @preproc.number
+(float_literal) @preproc.number.float
+(boolean_literal) @preproc.boolean
+(comment) @preproc.comment
 
-(null_literal) @constant
+[ "," "." ":"] @preproc.punctuation.delimiter
+[ "(" ")" "[" "]" "<" ">"] @preproc.punctuation.bracket
 
-"defined" @constant
-
-(comment) @comment
-
-[
-  ","
-  "."
-  ":"
-] @punctuation.delimiter
-
-[
-  (attribute_ignore)
-  (attribute_context)
-  "recursive"
-] @attribute.builtin
-
-[
-  "("
-  ")"
-  "["
-  "]"
-  "<"
-  ">"
-] @punctuation.bracket
-
-(binary_operator) @operator
-
-[
-  "block"
-  "with"
-  "filter"
-  "macro"
-  "set"
-  "trans"
-  "pluralize"
-  "autoescape"
-] @keyword
-
-[
-  "endtrans"
-  "endblock"
-  "endwith"
-  "endfilter"
-  "endmacro"
-  "endcall"
-  "endset"
-  "endtrans"
-  "endautoescape"
-] @keyword
-
-(do_statement
-  "do" @keyword)
-
-[
-  "include"
-  "import"
-  "from"
-  "extends"
-  "as"
-] @keyword.import
-
-(import_statement
-  (identifier) @variable)
-
-(import_as
-  (identifier) @variable)
-
-[
-  "if"
-  "else"
-  "endif"
-  "elif"
-] @keyword.conditional
-
-[
-  "for"
-  "in"
-  "continue"
-  "break"
-  "endfor"
-] @keyword.repeat
-
-"call" @function.call
-
-(function_call
-  (identifier) @function.call)
-
-(arg
-  (identifier) @variable.parameter)
-
+(import_statement (identifier) @preproc.variable)
+(import_as (identifier) @preproc.variable)
+(arg (identifier) @preproc.variable)
+(expression "." (expression)+ @preproc.variable)
+(assignment_expression "." (identifier)+ @preproc.variable)
 (arg
   (expression
     (binary_expression
       (unary_expression
         (primary_expression
-          (identifier) @variable.parameter)))))
+          (identifier) @preproc.variable)))))
 
-(expression
-  "."
-  (expression)+ @variable.member)
+(function_call (identifier) @preproc.function)
 
-(assignment_expression
-  "."
-  (identifier)+ @variable.member)
-
-(inline_trans
-  "_" @function.builtin)
-
-"debug" @function.builtin
-
-; TODO: only match raw
-(raw_start) @keyword
-
-(raw_end) @keyword
-
-(raw_body) @markup.raw.block
+[
+  "block" "with" "filter" "macro" "set" "trans" "pluralize" "autoescape" "endtrans" "endblock" "endwith" "endfilter"
+  "endmacro" "endcall" "endset" "endtrans" "endautoescape" "include" "import" "from" "extends" "as" "if" "else" "endif"
+  "elif" "for" "in" "continue" "break" "endfor" "call" "defined" "debug" "_" "recursive"
+] @preproc.keyword
 
 (builtin_test
   [
-    "boolean"
-    "even"
-    "in"
-    "mapping"
-    "sequence"
-    "callable"
-    "integer"
-    "ne"
-    "string"
-    "defined"
-    "filter"
-    "iterable"
-    "none"
-    "test"
-    "divisibleby"
-    "float"
-    "le"
-    "number"
-    "eq"
-    "ge"
-    "lower"
-    "odd"
-    "undefined"
-    "escaped"
-    "gt"
-    "lt"
-    "sameas"
-    "upper"
-  ] @keyword.operator)
+    "boolean" "even" "in" "mapping" "sequence" "callable" "integer" "ne" "string" "defined" "filter" "iterable" "none"
+    "test" "divisibleby" "float" "le" "number" "eq" "ge" "lower" "odd" "undefined" "escaped" "gt" "lt" "sameas" "upper"
+  ] @preproc.keyword)
+
+[
+  (attribute_ignore)
+  (attribute_context)
+  (null_literal)
+  (binary_operator)
+] @preproc.keyword
+
+(do_statement "do" @preproc.keyword)
 
 [
   "# "
@@ -171,4 +75,4 @@
   "+%}"
   "-%}"
   "%}"
-] @keyword.directive
+] @preproc.keyword.directive
